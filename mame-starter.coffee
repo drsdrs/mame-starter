@@ -17,6 +17,7 @@ selGame = ""
 menuOffset = 0
 keyInit = false
 whileInitScreen = false
+rotateScreenBool = false
 
 
 console.log "Welcome to MAME starter"
@@ -47,8 +48,10 @@ process.stdout.on "resize", ->
   if whileInitScreen is false then renderSelectScreen()
 
 startGame = ->
-  rotateScreen("normal")
-  grep = spawn("mame", [selGame, "-rol", "-rompath", romPath, "-cfg_directory", configPath])
+  if rotateScreenBool is true
+    rotateScreen("normal")
+    grep = spawn("mame", [selGame, "-rol", "-rompath", romPath, "-cfg_directory", configPath])
+  else grep = spawn("mame", [selGame, "-rompath", romPath, "-cfg_directory", configPath])
   grep.on "close", -> renderSelectScreen()
 
 
@@ -141,7 +144,7 @@ renderSelectScreen= ->
 
 ## INIT APP
 ###########
-#rotateScreen("left")
+if rotateScreenBool is true then rotateScreen("left")
 if getArgs() is true then getGoodGames renderSelectScreen
 else checkGamelist getGoodGames, renderSelectScreen
 #getGoodGames(renderSelectScreen)
