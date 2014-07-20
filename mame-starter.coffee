@@ -106,6 +106,7 @@ initKeys= ->
 rotateScreen= (orientation)-> grep = spawn("xrandr", ["-o", orientation])
 
 
+
 # main menu screen
 renderSelectScreen= ->
   whileInitScreen = true
@@ -127,6 +128,7 @@ renderSelectScreen= ->
     else result += (space+g.name)
     console.log(result)
   setTimeout (->whileInitScreen = false), 80
+
 
 ## INIT APP
 ###########
