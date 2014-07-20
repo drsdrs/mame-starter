@@ -7,6 +7,11 @@ keypress = require "keypress"
 cols = process.stdout.columns
 rows = process.stdout.rows
 romPath = __dirname+"/roms/"
+configPath = __dirname+"/config/"
+keys =
+  up: "w"
+  down: "s"
+  submit: "return"
 games = []
 selGame = ""
 menuOffset = 0
@@ -26,7 +31,7 @@ getArgs= ->
 
 checkGamelist= (cb, cb2)->
   exists = true
-  fs.readFile romPath+"games.txt", (err, res)->
+  fs.readFile configPath+"games.txt", (err, res)->
     if err
       console.log("no games.txt found")
       cb(cb2)
@@ -43,7 +48,7 @@ process.stdout.on "resize", ->
 
 startGame = ->
   rotateScreen("normal")
-  grep = spawn("mame", [selGame, "-rol", "-rompath", romPath])
+  grep = spawn("mame", [selGame, "-rol", "-rompath", romPath, "-cfg_directory", configPath])
   grep.on "close", -> renderSelectScreen()
 
 
@@ -51,7 +56,7 @@ getGoodGames= (cb)->
   writeFile = ->
     data = JSON.stringify games
     console.log data
-    fs.writeFile romPath+"games.txt", data, (err)-> if !err then cb()
+    fs.writeFile configPath+"games.txt", data, (err)-> if !err then cb()
   getGameXml= (game, cb)->
     rawXml = ""
     mameGetXml = spawn("mame", ["-listxml", game])
@@ -67,7 +72,7 @@ getGoodGames= (cb)->
         games.push obj
 
   ### ASYNC PROBLEM ??? ###
-  console.log("search for goodgames in rompath", romPath)
+  console.log("search for goodgames in rompath", romPath.white)
   mameCheck = spawn("mame", ["-verifyroms", "-rompath", romPath])
   mameCheck.stdout.on 'data', (data)->
     #for key,val of data then console.log(key,val)
@@ -87,14 +92,14 @@ initKeys= ->
     #console.log("key pressed: ", key)
     #process.stdin.pause()  if key and key.ctrl and key.name is "c"
     if whileInitScreen is true then return
-    if key.name=="s"
+    if key.name==keys.down
       menuOffset--
       if menuOffset<0 then menuOffset = games.length
       renderSelectScreen()
-    else if key.name=="w"
+    else if key.name==keys.up
       #menuOffset++
       if ++menuOffset>games.length then menuOffset=0
-    else if key.name=="return"
+    else if key.name==keys.submit
       #menuOffset++
       startGame()
     if key && key.name is "c" && key.ctrl 
@@ -105,22 +110,26 @@ initKeys= ->
 
 rotateScreen= (orientation)-> grep = spawn("xrandr", ["-o", orientation])
 
-
+writeConfig = ->
+  data = JSON.stringify games
+  console.log data
+  fs.writeFile configPath+"default.cfg", data, (err)-> if !err then cb()
 
 # main menu screen
 renderSelectScreen= ->
   whileInitScreen = true
   if keyInit is false then initKeys(); keyInit = true
-  len = rows-1
+  len = Math.round(rows-1)
   while len--
     g = games[(len+menuOffset)%games.length]
     result = ""
     space = ""
     spaceL = ""
     spacelen = Math.round((cols-g.name.length)/2)
-    spacelenL = cols-spacelen-g.name.length
-    while spacelen-- then space += " "
-    while spacelenL-- then spaceL += " "
+    spacelenL = Math.round(cols-spacelen-g.name.length)
+    if spacelen>1 then while spacelen-- then space += " "
+    if spacelenL>1 then while spacelenL-- then spaceL += " "
+    
     if len is ~~(rows/2)
       name = g.name
       result += (space.blackBG+name.blackBG.white+spaceL.blackBG)
