@@ -1,0 +1,23 @@
+{
+  "name": "mame-starter",
+  "version": "0.0.0",
+  "description": "start mame games",
+  "main": "mame-starter.coffee",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "mame-starter"
+  },
+  "keywords": [
+    "mame"
+  ],
+  "author": "drs",
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "keypress": "~0.2.1",
+    "colors": "~0.6.2",
+    "xml2js": "~0.4.4"
+  }
+}
