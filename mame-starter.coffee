@@ -6,7 +6,7 @@ parseString = require("xml2js").parseString
 keypress = require "keypress"
 cols = process.stdout.columns
 rows = process.stdout.rows
-romPath = __dirname+"/../roms/"
+romPath = __dirname+"/roms/"
 games = []
 selGame = ""
 menuOffset = 0
@@ -16,9 +16,12 @@ whileInitScreen = false
 
 console.log "Welcome to MAME starter"
 # get args
-getReloadArg= ->
+getArgs= ->
   reload = false
-  process.argv.forEach (val, index, array) -> if val is "-r" then return reload= true
+  process.argv.forEach (val, index, array) ->
+    if val is "-r" then reload= true
+    if val.slice(0, 2) is "./" or val.slice(0, 3) is "../"
+      romPath = __dirname+"/"+val+"/"
   reload
 
 checkGamelist= (cb, cb2)->
@@ -36,11 +39,12 @@ checkGamelist= (cb, cb2)->
 process.stdout.on "resize", ->
   cols = process.stdout.columns
   rows = process.stdout.rows
-  if whileInitScreen is false then initSelectSreen()
+  if whileInitScreen is false then renderSelectScreen()
 
 startGame = ->
+  rotateScreen("normal")
   grep = spawn("mame", [selGame, "-rol", "-rompath", romPath])
-  grep.on "close", -> initSelectSreen()
+  grep.on "close", -> renderSelectScreen()
 
 
 getGoodGames= (cb)->
@@ -63,14 +67,13 @@ getGoodGames= (cb)->
         games.push obj
 
   ### ASYNC PROBLEM ??? ###
-  console.log("search for goodgames in rompath")
+  console.log("search for goodgames in rompath", romPath)
   mameCheck = spawn("mame", ["-verifyroms", "-rompath", romPath])
   mameCheck.stdout.on 'data', (data)->
     #for key,val of data then console.log(key,val)
     res = data.toString().split(" ")
     if res[0] is "romset" && res[3] is "good\n"
       getGameXml res[1]
-
 
   mameCheck.on 'close', (code)->
     console.log("get good games finished!")
@@ -83,21 +86,28 @@ initKeys= ->
   process.stdin.on "keypress", (ch, key) ->
     #console.log("key pressed: ", key)
     #process.stdin.pause()  if key and key.ctrl and key.name is "c"
+    if whileInitScreen is true then return
     if key.name=="s"
       menuOffset--
       if menuOffset<0 then menuOffset = games.length
-      initSelectSreen()
+      renderSelectScreen()
     else if key.name=="w"
       #menuOffset++
       if ++menuOffset>games.length then menuOffset=0
     else if key.name=="return"
       #menuOffset++
       startGame()
-    else return
-    initSelectSreen()
+    if key && key.name is "c" && key.ctrl 
+      console.log("bye bye!")
+      process.exit()
+
+    renderSelectScreen()
+
+rotateScreen= (orientation)-> grep = spawn("xrandr", ["-o", orientation])
+
 
 # main menu screen
-initSelectSreen= ->
+renderSelectScreen= ->
   whileInitScreen = true
   if keyInit is false then initKeys(); keyInit = true
   len = rows-1
@@ -116,11 +126,11 @@ initSelectSreen= ->
       selGame = g.file
     else result += (space+g.name)
     console.log(result)
-  whileInitScreen = false
+  setTimeout (->whileInitScreen = false), 80
 
-## init app
-if getReloadArg is true then getGoodGames initSelectSreen
-else checkGamelist getGoodGames, initSelectSreen
-#getGamesAsync(x)
-
-#getGoodGames(initSelectSreen)
+## INIT APP
+###########
+#rotateScreen("left")
+if getArgs() is true then getGoodGames renderSelectScreen
+else checkGamelist getGoodGames, renderSelectScreen
+#getGoodGames(renderSelectScreen)
