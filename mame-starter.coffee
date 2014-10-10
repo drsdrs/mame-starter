@@ -122,7 +122,11 @@ writeConfig = ->
 renderSelectScreen= ->
   whileInitScreen = true
   if keyInit is false then initKeys(); keyInit = true
-  len = Math.round(rows-1)
+  process.stdout.write("\u001B[2J\u001B[0;0f")
+  fixedRows = 13
+  rowsleft = ~~((rows-fixedRows)/2)
+  while rowsleft-- then process.stdout.write "\n"
+  len = Math.round(fixedRows-1)
   while len--
     g = games[(len+menuOffset)%games.length]
     result = ""
@@ -133,13 +137,13 @@ renderSelectScreen= ->
     if spacelen>1 then while spacelen-- then space += " "
     if spacelenL>1 then while spacelenL-- then spaceL += " "
     
-    if len is ~~(rows/2)
+    if len is ~~(fixedRows/2)
       name = g.name
       result += (space.blackBG+name.blackBG.white+spaceL.blackBG)
       selGame = g.file
     else result += (space+g.name)
-    console.log(result)
-  setTimeout (->whileInitScreen = false), 80
+    process.stdout.write(result+"\n")
+  setTimeout (->whileInitScreen = false), 280
 
 
 ## INIT APP
